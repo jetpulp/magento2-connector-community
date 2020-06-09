@@ -67,6 +67,11 @@ class Product extends JobImport
      */
     const CONFIGURABLE_INSERTION_MAX_SIZE = 500;
     /**
+     * Default tax class id equals to 20% on fr store
+     * @var int DEFAULT_TAX_CLASS
+     */
+    const DEFAULT_TAX_CLASS = 2;
+    /**
      * This variable contains a string value
      *
      * @var string $code
@@ -1393,26 +1398,31 @@ class Product extends JobImport
          */
 
         /** JETPULP : Allow to modify tax class in magento */
+        $columnsForTaxClassId = ['_entity_id', 'classe_de_taxe'];
+        $productsSelect = $connection->select()->from($tmpTable, $columnsForTaxClassId);
+        $productsList = $connection->query($productsSelect);
 
-        // Set products tax classId
-        /** @var string $taxClassIdAttributeId */
-        $taxClassIdAttributeId = $this->eavAttribute->getIdByCode('catalog_product', 'tax_class_id');
-        /** @var string $identifierColumn */
-        $identifierColumn = $this->entitiesHelper->getColumnIdentifier('catalog_product_entity_int');
-        /** @var string[] $columnsForStatus */
-        $columnsForTaxClassId = ['entity_id' => 'a._entity_id', '_is_new' => 'a._is_new'];
-        $select           = $connection->select()->from(['a' => $tmpTable], $columnsForTaxClassId)
-            ->joinInner(['b' => $this->entitiesHelper->getTable('catalog_product_entity')],
-                'a._entity_id = b.entity_id' )
-            ->joinInner(['c' => $this->entitiesHelper->getTable('catalog_product_entity_int')],
-                'b.row_id = c.' . $identifierColumn
-            )->where('a._is_new = ?', 0)->where('c.attribute_id = ?', $taxClassIdAttributeId);
-        $oldTaxClassId        = $connection->query($select);
-        while (($row = $oldTaxClassId->fetch())) {
+        while (($row = $productsList->fetch())) {
+
+            $taxClassIdSelect = $connection->select()
+                ->from(['tc' => 'tax_calculation'], ['product_tax_class_id'])
+                ->joinInner(['tcr' => $this->entitiesHelper->getTable('tax_calculation_rate')],
+                    'tc.tax_calculation_rate_id = tcr.tax_calculation_rate_id' )
+                ->where('tcr.rate = ?', (float) $row['classe_de_taxe'])
+                ->where('tcr.tax_country_id LIKE \'FR\' ')
+            ;
+
+            $taxClassId = $connection->query($taxClassIdSelect)->fetch();
+
+            if (!isset($taxClassId['product_tax_class_id'])) {
+                $taxClassId['product_tax_class_id'] = self::DEFAULT_TAX_CLASS;
+            }
+
             $valuesToInsert = [
-                '_tax_class_id' => $row['value'],
+                '_tax_class_id' => $taxClassId['product_tax_class_id'],
             ];
-            $connection->update($tmpTable, $valuesToInsert, ['_entity_id = ?' => $row['entity_id']]);
+
+            $connection->update($tmpTable, $valuesToInsert, ['_entity_id = ?' => $row['_entity_id']]);
         }
 
         /** @var mixed[] $taxClasses */
