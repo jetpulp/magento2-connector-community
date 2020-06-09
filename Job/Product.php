@@ -67,6 +67,11 @@ class Product extends JobImport
      */
     const CONFIGURABLE_INSERTION_MAX_SIZE = 500;
     /**
+     * Default tax class id equals to 20% on fr store
+     * @var int DEFAULT_TAX_CLASS
+     */
+    const DEFAULT_TAX_CLASS = 2;
+    /**
      * This variable contains a string value
      *
      * @var string $code
@@ -122,7 +127,8 @@ class Product extends JobImport
         '_options_container',
         '_tax_class_id',
         '_attribute_set_id',
-        '_visibility',
+        '1419
+        ity',
         '_children',
         '_axis',
         'identifier',
@@ -1410,7 +1416,7 @@ class Product extends JobImport
             $taxClassId = $connection->query($taxClassIdSelect)->fetch();
 
             if (!isset($taxClassId['product_tax_class_id'])) {
-                $taxClassId['product_tax_class_id'] = 2;
+                $taxClassId['product_tax_class_id'] = self::DEFAULT_TAX_CLASS;
             }
 
             $valuesToInsert = [
