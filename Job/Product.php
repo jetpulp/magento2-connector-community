@@ -127,8 +127,7 @@ class Product extends JobImport
         '_options_container',
         '_tax_class_id',
         '_attribute_set_id',
-        '1419
-        ity',
+        '_visibility',
         '_children',
         '_axis',
         'identifier',
