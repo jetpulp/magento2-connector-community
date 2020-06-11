@@ -376,7 +376,6 @@ class Product extends JobImport
                         if ($amount != null) {
                             $amount = floatval($amount);
                         }
-                        $amount = floatval($amount);
 
                         $product['values'][$attributeMetric][$key]['data']['amount'] = $amount;
                     }
