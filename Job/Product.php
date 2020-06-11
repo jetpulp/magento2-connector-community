@@ -1429,6 +1429,34 @@ class Product extends JobImport
         }
         /** END JETPULP  tax class */
 
+        /** JETPULP: Allow to modify Visibility */
+
+        /** @var string $visibilityAttributeId */
+        $visibilityAttributeId = $this->eavAttribute->getIdByCode('catalog_product', 'visibility');
+
+        /** @var string $identifierColumn */
+        $identifierColumn = $this->entitiesHelper->getColumnIdentifier('catalog_product_entity_int');
+
+        /** @var string[] $columnsForStatus */
+        $columns = ['entity_id' => 'a._entity_id', '_is_new' => 'a._is_new'];
+
+        $select = $connection->select()->from(['a' => $tmpTable], $columns)
+            ->joinInner(['b' => $this->entitiesHelper->getTable('catalog_product_entity')],
+                'a._entity_id = b.entity_id')
+            ->joinInner(['c' => $this->entitiesHelper->getTable('catalog_product_entity_int')],
+                'b.row_id = c.' . $identifierColumn)
+            ->where('a._is_new = ?', 0)->where('c.attribute_id = ?', $visibilityAttributeId);
+
+        $oldVisibility        = $connection->query($select);
+
+        while (($row = $oldVisibility->fetch())) {
+            $valuesToInsert = [
+                '_visibility' => $row['value'],
+            ];
+            $connection->update($tmpTable, $valuesToInsert, ['_entity_id = ?' => $row['entity_id']]);
+        }
+        /** END JETPULP Visibility */
+
         /** @var string $column */
         foreach ($columns as $column) {
             /** @var string[] $columnParts */
