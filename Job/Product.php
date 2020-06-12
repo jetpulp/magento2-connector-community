@@ -1447,9 +1447,9 @@ class Product extends JobImport
         $identifierColumn = $this->entitiesHelper->getColumnIdentifier('catalog_product_entity_int');
 
         /** @var string[] $columnsForStatus */
-        $columns = ['entity_id' => 'a._entity_id', '_is_new' => 'a._is_new'];
+        $columnsForVisibility = ['entity_id' => 'a._entity_id', '_is_new' => 'a._is_new'];
 
-        $select = $connection->select()->from(['a' => $tmpTable], $columns)
+        $select = $connection->select()->from(['a' => $tmpTable], $columnsForVisibility)
             ->joinInner(['b' => $this->entitiesHelper->getTable('catalog_product_entity')],
                 'a._entity_id = b.entity_id')
             ->joinInner(['c' => $this->entitiesHelper->getTable('catalog_product_entity_int')],
